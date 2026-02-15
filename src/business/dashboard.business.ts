@@ -21,6 +21,7 @@ export const getDashboardStats = async (userId: string): Promise<DashboardStats>
       totalTodos: todoStats.total,
       completedTodos: todoStats.completed,
       pendingTodos: todoStats.pending,
+      importantTodos: todoStats.important,
     };
   } catch (error) {
     logger.error('Failed to get dashboard stats', { error, userId });

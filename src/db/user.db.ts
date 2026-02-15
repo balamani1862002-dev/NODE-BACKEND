@@ -216,3 +216,60 @@ export const deleteUserById = async (userId: string): Promise<void> => {
     throw error;
   }
 };
+
+export const getUserBalance = async (userId: string): Promise<number> => {
+  try {
+    const client = getSupabaseClient();
+    
+    const { data, error } = await client
+      .from('transactions')
+      .select('type, amount')
+      .eq('user_id', userId);
+
+    if (error) {
+      logger.error('Supabase error getting user balance', { error: error.message, code: error.code, userId });
+      throw new Error(`Failed to fetch transactions: ${error.message}`);
+    }
+
+    if (!data || data.length === 0) {
+      return 0;
+    }
+
+    const balance = data.reduce((acc, transaction) => {
+      if (transaction.type === 'income') {
+        return acc + transaction.amount;
+      } else {
+        return acc - transaction.amount;
+      }
+    }, 0);
+
+    return balance;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logger.error('Failed to get user balance', { error: errorMessage, userId });
+    throw error;
+  }
+};
+
+export const getUserRemainingTodos = async (userId: string): Promise<number> => {
+  try {
+    const client = getSupabaseClient();
+    
+    const { count, error } = await client
+      .from('todos')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('status', 'pending');
+
+    if (error) {
+      logger.error('Supabase error getting user remaining todos', { error: error.message, code: error.code, userId });
+      throw new Error(`Failed to fetch todos: ${error.message}`);
+    }
+
+    return count || 0;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logger.error('Failed to get user remaining todos', { error: errorMessage, userId });
+    throw error;
+  }
+};

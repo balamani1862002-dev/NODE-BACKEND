@@ -1,12 +1,23 @@
 import { getSupabaseClient } from './supabase';
-import { DashboardStats } from '../types/common.types';
 import { logger } from '../common/logger';
 
-export const getDashboardStats = async (userId: string): Promise<DashboardStats> => {
+interface TodoStats {
+  total: number;
+  completed: number;
+  pending: number;
+  important: number;
+}
+
+interface TransactionStats {
+  totalIncome: number;
+  totalExpense: number;
+}
+
+export const getTodoStats = async (userId: string): Promise<TodoStats> => {
   try {
     const client = getSupabaseClient();
 
-    // Get todos count
+    // Get total todos count
     const { count: totalTodos, error: todosError } = await client
       .from('todos')
       .select('*', { count: 'exact', head: true })
@@ -38,6 +49,22 @@ export const getDashboardStats = async (userId: string): Promise<DashboardStats>
       throw importantError;
     }
 
+    return {
+      total: totalTodos || 0,
+      completed: completedTodos || 0,
+      pending: (totalTodos || 0) - (completedTodos || 0),
+      important: importantTodos || 0,
+    };
+  } catch (error) {
+    logger.error('Failed to get todo stats', { error, userId });
+    throw error;
+  }
+};
+
+export const getTransactionStats = async (userId: string): Promise<TransactionStats> => {
+  try {
+    const client = getSupabaseClient();
+
     // Get transactions for financial summary
     const { data: transactions, error: transactionsError } = await client
       .from('transactions')
@@ -60,16 +87,11 @@ export const getDashboardStats = async (userId: string): Promise<DashboardStats>
     });
 
     return {
-      totalTodos: totalTodos || 0,
-      completedTodos: completedTodos || 0,
-      pendingTodos: (totalTodos || 0) - (completedTodos || 0),
-      importantTodos: importantTodos || 0,
       totalIncome,
       totalExpense,
-      currentBalance: totalIncome - totalExpense,
     };
   } catch (error) {
-    logger.error('Failed to get dashboard stats', { error, userId });
+    logger.error('Failed to get transaction stats', { error, userId });
     throw error;
   }
 };
