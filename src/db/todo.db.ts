@@ -137,7 +137,7 @@ export const insertTodo = async (userId: string, input: CreateTodoInput): Promis
       title: data.title,
       description: data.description,
       status: data.status,
-      isImportant: data.is_important,
+      isImportant: data.isImportant,
       hasReminder: data.has_reminder,
       reminderDate: data.reminder_date,
       order: data.order,

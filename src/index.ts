@@ -7,6 +7,7 @@ import YAML from 'yamljs';
 import path from 'path';
 import { initializeSupabase } from './db/supabase';
 import { logger } from './common/logger';
+import { sendError } from './common/response';
 
 import authRoutes from './routes/auth.route';
 import userRoutes from './routes/user.route';
@@ -78,13 +79,7 @@ const startServer = async (): Promise<void> => {
     app.use('/api/dashboard', dashboardRoutes);
 
     app.use((req: Request, res: Response) => {
-      res.status(404).json({
-        success: false,
-        error: {
-          code: 'NOT_FOUND',
-          message: 'Endpoint not found',
-        },
-      });
+      sendError(res, 404, 'NOT_FOUND', 'Endpoint not found', 'Not Found');
     });
 
     app.listen(PORT, () => {

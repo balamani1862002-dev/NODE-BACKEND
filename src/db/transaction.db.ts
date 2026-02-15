@@ -36,7 +36,7 @@ export const findTransactionsByUserId = async (
     }
 
     const { data, error: dataError } = await dataQuery
-      .order('date', { ascending: false })
+      .order('transaction_date', { ascending: false })
       .range(offset, offset + limit - 1);
 
     if (dataError) {
@@ -50,7 +50,7 @@ export const findTransactionsByUserId = async (
       amount: txn.amount,
       category: txn.category,
       description: txn.description,
-      date: txn.date,
+      date: txn.transaction_date,
       createdAt: txn.created_at,
     })) as Transaction[];
 
@@ -108,7 +108,7 @@ export const insertTransaction = async (userId: string, input: CreateTransaction
         amount: input.amount,
         category: input.category,
         description: input.description,
-        date: input.date,
+        transaction_date: input.date,
       })
       .select('*')
       .single();

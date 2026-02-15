@@ -10,14 +10,12 @@ import {
 } from '../business/transaction.business';
 import { CreateTransactionInput, UpdateTransactionInput, TransactionType } from '../types/transaction.types';
 import { logger } from '../common/logger';
+import { sendSuccess, sendError } from '../common/response';
 
 export const getTransactionsController = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
-      res.status(401).json({
-        success: false,
-        error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
-      });
+      sendError(res, 401, 'UNAUTHORIZED', 'Authentication required', 'Unauthorized');
       return;
     }
 
@@ -29,24 +27,18 @@ export const getTransactionsController = async (req: AuthRequest, res: Response)
 
     const result = await getAllTransactions(req.user.userId, page, limit, type, startDate, endDate);
 
-    res.status(200).json(result);
+    sendSuccess(res, 200, result);
   } catch (error) {
     logger.error('Get transactions controller error', { error });
     const errorMessage = error instanceof Error ? error.message : 'Failed to get transactions';
-    res.status(500).json({
-      success: false,
-      error: { code: 'GET_TRANSACTIONS_FAILED', message: errorMessage },
-    });
+    sendError(res, 500, 'GET_TRANSACTIONS_FAILED', errorMessage, 'Internal Server Error');
   }
 };
 
 export const getTransactionSummaryController = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
-      res.status(401).json({
-        success: false,
-        error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
-      });
+      sendError(res, 401, 'UNAUTHORIZED', 'Authentication required', 'Unauthorized');
       return;
     }
 
@@ -55,56 +47,41 @@ export const getTransactionSummaryController = async (req: AuthRequest, res: Res
 
     const result = await getTransactionSummary(req.user.userId, startDate, endDate);
 
-    res.status(200).json(result);
+    sendSuccess(res, 200, result);
   } catch (error) {
     logger.error('Get transaction summary controller error', { error });
-    res.status(500).json({
-      success: false,
-      error: { code: 'GET_SUMMARY_FAILED', message: 'Failed to get transaction summary' },
-    });
+    sendError(res, 500, 'GET_SUMMARY_FAILED', 'Failed to get transaction summary', 'Internal Server Error');
   }
 };
 
 export const createTransactionController = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
-      res.status(401).json({
-        success: false,
-        error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
-      });
+      sendError(res, 401, 'UNAUTHORIZED', 'Authentication required', 'Unauthorized');
       return;
     }
 
     const input = req.body as unknown as CreateTransactionInput;
 
     if (!input.type || !input.amount || !input.category || !input.description || !input.date) {
-      res.status(400).json({
-        success: false,
-        error: { code: 'INVALID_INPUT', message: 'All fields are required' },
-      });
+      sendError(res, 400, 'INVALID_INPUT', 'All fields are required', 'Bad Request');
       return;
     }
 
     const transaction = await createTransaction(req.user.userId, input);
 
-    res.status(201).json(transaction);
+    sendSuccess(res, 201, transaction, 'Created');
   } catch (error) {
     logger.error('Create transaction controller error', { error });
     const errorMessage = error instanceof Error ? error.message : 'Failed to create transaction';
-    res.status(400).json({
-      success: false,
-      error: { code: 'CREATE_TRANSACTION_FAILED', message: errorMessage },
-    });
+    sendError(res, 400, 'CREATE_TRANSACTION_FAILED', errorMessage, 'Bad Request');
   }
 };
 
 export const updateTransactionController = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
-      res.status(401).json({
-        success: false,
-        error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
-      });
+      sendError(res, 401, 'UNAUTHORIZED', 'Authentication required', 'Unauthorized');
       return;
     }
 
@@ -113,25 +90,20 @@ export const updateTransactionController = async (req: AuthRequest, res: Respons
 
     const transaction = await updateTransactionById(transactionId, req.user.userId, input);
 
-    res.status(200).json(transaction);
+    sendSuccess(res, 200, transaction);
   } catch (error) {
     logger.error('Update transaction controller error', { error });
     const errorMessage = error instanceof Error ? error.message : 'Failed to update transaction';
     const statusCode = errorMessage === 'Transaction not found' ? 404 : 400;
-    res.status(statusCode).json({
-      success: false,
-      error: { code: 'UPDATE_TRANSACTION_FAILED', message: errorMessage },
-    });
+    const statusText = statusCode === 404 ? 'Not Found' : 'Bad Request';
+    sendError(res, statusCode, 'UPDATE_TRANSACTION_FAILED', errorMessage, statusText);
   }
 };
 
 export const deleteTransactionController = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
-      res.status(401).json({
-        success: false,
-        error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
-      });
+      sendError(res, 401, 'UNAUTHORIZED', 'Authentication required', 'Unauthorized');
       return;
     }
 
@@ -139,25 +111,20 @@ export const deleteTransactionController = async (req: AuthRequest, res: Respons
 
     await deleteTransactionById(transactionId, req.user.userId);
 
-    res.status(200).json({ message: 'Transaction deleted successfully' });
+    sendSuccess(res, 200, { message: 'Transaction deleted successfully' });
   } catch (error) {
     logger.error('Delete transaction controller error', { error });
     const errorMessage = error instanceof Error ? error.message : 'Failed to delete transaction';
     const statusCode = errorMessage === 'Transaction not found' ? 404 : 500;
-    res.status(statusCode).json({
-      success: false,
-      error: { code: 'DELETE_TRANSACTION_FAILED', message: errorMessage },
-    });
+    const statusText = statusCode === 404 ? 'Not Found' : 'Internal Server Error';
+    sendError(res, statusCode, 'DELETE_TRANSACTION_FAILED', errorMessage, statusText);
   }
 };
 
 export const getAnalyticsController = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
-      res.status(401).json({
-        success: false,
-        error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
-      });
+      sendError(res, 401, 'UNAUTHORIZED', 'Authentication required', 'Unauthorized');
       return;
     }
 
@@ -166,12 +133,9 @@ export const getAnalyticsController = async (req: AuthRequest, res: Response): P
 
     const result = await getAnalyticsData(req.user.userId, startDate, endDate);
 
-    res.status(200).json(result);
+    sendSuccess(res, 200, result);
   } catch (error) {
     logger.error('Get analytics controller error', { error });
-    res.status(500).json({
-      success: false,
-      error: { code: 'GET_ANALYTICS_FAILED', message: 'Failed to get analytics data' },
-    });
+    sendError(res, 500, 'GET_ANALYTICS_FAILED', 'Failed to get analytics data', 'Internal Server Error');
   }
 };

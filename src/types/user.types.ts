@@ -32,7 +32,7 @@ export interface UpdateProfileInput {
   email?: string;
   phone?: string;
   address?: string;
-  profileImage?: string;
+  profile_image?: string;
 }
 
 export interface AuthResponse {

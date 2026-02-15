@@ -101,7 +101,7 @@ export const updateUser = async (userId: string, input: UpdateProfileInput): Pro
     if (input.email) updates.email = input.email;
     if (input.phone !== undefined) updates.phone = input.phone;
     if (input.address !== undefined) updates.address = input.address;
-    if (input.profileImage !== undefined) updates.profile_image = input.profileImage;
+    if (input.profile_image  !== undefined) updates.profile_image = input.profile_image;
 
     if (Object.keys(updates).length === 0) {
       throw new Error('No fields to update');

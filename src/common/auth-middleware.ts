@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { JWTPayload } from '../types/user.types';
 import { logger } from './logger';
+import { sendError } from './response';
 
 export interface AuthRequest extends Request {
   user?: JWTPayload;
@@ -17,13 +18,7 @@ export const authenticateToken = (
     const token = authHeader && authHeader.split(' ')[1];
 
     if (!token) {
-      res.status(401).json({
-        success: false,
-        error: {
-          code: 'UNAUTHORIZED',
-          message: 'Access token is missing',
-        },
-      });
+      sendError(res, 401, 'UNAUTHORIZED', 'Access token is missing', 'Unauthorized');
       return;
     }
 
@@ -37,13 +32,7 @@ export const authenticateToken = (
     next();
   } catch (error) {
     logger.error('Token authentication failed', { error });
-    res.status(401).json({
-      success: false,
-      error: {
-        code: 'UNAUTHORIZED',
-        message: 'Invalid or expired token',
-      },
-    });
+    sendError(res, 401, 'UNAUTHORIZED', 'Invalid or expired token', 'Unauthorized');
   }
 };
 
@@ -54,37 +43,18 @@ export const requireAdmin = (
 ): void => {
   try {
     if (!req.user) {
-      res.status(401).json({
-        success: false,
-        error: {
-          code: 'UNAUTHORIZED',
-          message: 'Authentication required',
-        },
-      });
+      sendError(res, 401, 'UNAUTHORIZED', 'Authentication required', 'Unauthorized');
       return;
     }
 
     if (req.user.role !== 'admin') {
-      res.status(403).json({
-        success: false,
-        error: {
-          code: 'FORBIDDEN',
-          message: 'Admin access required',
-        },
-      });
+      sendError(res, 403, 'FORBIDDEN', 'Admin access required', 'Forbidden');
       return;
     }
 
     next();
   } catch (error) {
     logger.error('Admin authorization failed', { error });
-    res.status(500).json({
-      success: false,
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: 'Authorization check failed',
-      },
-    });
+    sendError(res, 500, 'INTERNAL_ERROR', 'Authorization check failed', 'Internal Server Error');
   }
 };
-

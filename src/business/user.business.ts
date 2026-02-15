@@ -1,7 +1,7 @@
 import { User, UpdateProfileInput } from '../types/user.types';
 import { findUserById, updateUser } from '../db/user.db';
 import { logger } from '../common/logger';
-import { isValidEmail } from '../common/validation';
+import { isValidEmail, isValidBase64Image, isBase64ImageSizeValid } from '../common/validation';
 
 export const getUserProfile = async (userId: string): Promise<User> => {
   try {
@@ -25,6 +25,16 @@ export const updateUserProfile = async (userId: string, input: UpdateProfileInpu
 
     if (input.email && !isValidEmail(input.email)) {
       throw new Error('Invalid email format');
+    }
+
+    if (input.profile_image ) {
+      if (!isValidBase64Image(input.profile_image )) {
+        throw new Error('Invalid profile image format. Must be a valid base64 image (png, jpg, jpeg, gif, webp, bmp, svg)');
+      }
+
+      if (!isBase64ImageSizeValid(input.profile_image , 5)) {
+        throw new Error('Profile image size exceeds 5MB limit');
+      }
     }
 
     const user = await updateUser(userId, input);

@@ -9,14 +9,12 @@ import {
 } from '../business/todo.business';
 import { CreateTodoInput, UpdateTodoInput, ReorderTodosInput, TodoFilter } from '../types/todo.types';
 import { logger } from '../common/logger';
+import { sendSuccess, sendError } from '../common/response';
 
 export const getTodosController = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
-      res.status(401).json({
-        success: false,
-        error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
-      });
+      sendError(res, 401, 'UNAUTHORIZED', 'Authentication required', 'Unauthorized');
       return;
     }
 
@@ -26,56 +24,41 @@ export const getTodosController = async (req: AuthRequest, res: Response): Promi
 
     const result = await getAllTodos(req.user.userId, filter, page, limit);
 
-    res.status(200).json(result);
+    sendSuccess(res, 200, result);
   } catch (error) {
     logger.error('Get todos controller error', { error });
-    res.status(500).json({
-      success: false,
-      error: { code: 'GET_TODOS_FAILED', message: 'Failed to get todos' },
-    });
+    sendError(res, 500, 'GET_TODOS_FAILED', 'Failed to get todos', 'Internal Server Error');
   }
 };
 
 export const createTodoController = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
-      res.status(401).json({
-        success: false,
-        error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
-      });
+      sendError(res, 401, 'UNAUTHORIZED', 'Authentication required', 'Unauthorized');
       return;
     }
 
     const input = req.body as unknown as CreateTodoInput;
 
     if (!input.title || !input.description) {
-      res.status(400).json({
-        success: false,
-        error: { code: 'INVALID_INPUT', message: 'Title and description are required' },
-      });
+      sendError(res, 400, 'INVALID_INPUT', 'Title and description are required', 'Bad Request');
       return;
     }
 
     const todo = await createTodo(req.user.userId, input);
 
-    res.status(201).json(todo);
+    sendSuccess(res, 201, todo, 'Created');
   } catch (error) {
     logger.error('Create todo controller error', { error });
     const errorMessage = error instanceof Error ? error.message : 'Failed to create todo';
-    res.status(400).json({
-      success: false,
-      error: { code: 'CREATE_TODO_FAILED', message: errorMessage },
-    });
+    sendError(res, 400, 'CREATE_TODO_FAILED', errorMessage, 'Bad Request');
   }
 };
 
 export const updateTodoController = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
-      res.status(401).json({
-        success: false,
-        error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
-      });
+      sendError(res, 401, 'UNAUTHORIZED', 'Authentication required', 'Unauthorized');
       return;
     }
 
@@ -84,25 +67,20 @@ export const updateTodoController = async (req: AuthRequest, res: Response): Pro
 
     const todo = await updateTodoById(todoId, req.user.userId, input);
 
-    res.status(200).json(todo);
+    sendSuccess(res, 200, todo);
   } catch (error) {
     logger.error('Update todo controller error', { error });
     const errorMessage = error instanceof Error ? error.message : 'Failed to update todo';
     const statusCode = errorMessage === 'Todo not found' ? 404 : 400;
-    res.status(statusCode).json({
-      success: false,
-      error: { code: 'UPDATE_TODO_FAILED', message: errorMessage },
-    });
+    const statusText = statusCode === 404 ? 'Not Found' : 'Bad Request';
+    sendError(res, statusCode, 'UPDATE_TODO_FAILED', errorMessage, statusText);
   }
 };
 
 export const deleteTodoController = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
-      res.status(401).json({
-        success: false,
-        error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
-      });
+      sendError(res, 401, 'UNAUTHORIZED', 'Authentication required', 'Unauthorized');
       return;
     }
 
@@ -110,46 +88,35 @@ export const deleteTodoController = async (req: AuthRequest, res: Response): Pro
 
     await deleteTodoById(todoId, req.user.userId);
 
-    res.status(200).json({ message: 'Todo deleted successfully' });
+    sendSuccess(res, 200, { message: 'Todo deleted successfully' });
   } catch (error) {
     logger.error('Delete todo controller error', { error });
     const errorMessage = error instanceof Error ? error.message : 'Failed to delete todo';
     const statusCode = errorMessage === 'Todo not found' ? 404 : 500;
-    res.status(statusCode).json({
-      success: false,
-      error: { code: 'DELETE_TODO_FAILED', message: errorMessage },
-    });
+    const statusText = statusCode === 404 ? 'Not Found' : 'Internal Server Error';
+    sendError(res, statusCode, 'DELETE_TODO_FAILED', errorMessage, statusText);
   }
 };
 
 export const reorderTodosController = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
-      res.status(401).json({
-        success: false,
-        error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
-      });
+      sendError(res, 401, 'UNAUTHORIZED', 'Authentication required', 'Unauthorized');
       return;
     }
 
     const input = req.body as unknown as ReorderTodosInput;
 
     if (!input.todos || input.todos.length === 0) {
-      res.status(400).json({
-        success: false,
-        error: { code: 'INVALID_INPUT', message: 'Todos array is required' },
-      });
+      sendError(res, 400, 'INVALID_INPUT', 'Todos array is required', 'Bad Request');
       return;
     }
 
     await reorderTodosList(req.user.userId, input);
 
-    res.status(200).json({ message: 'Todos reordered successfully' });
+    sendSuccess(res, 200, { message: 'Todos reordered successfully' });
   } catch (error) {
     logger.error('Reorder todos controller error', { error });
-    res.status(400).json({
-      success: false,
-      error: { code: 'REORDER_TODOS_FAILED', message: 'Failed to reorder todos' },
-    });
+    sendError(res, 400, 'REORDER_TODOS_FAILED', 'Failed to reorder todos', 'Bad Request');
   }
 };
